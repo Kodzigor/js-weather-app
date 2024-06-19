@@ -18,7 +18,7 @@ export function getWeather(lat, lon, timezone) {
       return {
         current: parseCurrentWeather(data),
         daily: parseDailyWeather(data),
-        hourly: parseHoutlyWeather(data),
+        hourly: parseHourlyWeather(data),
       };
     });
 }
@@ -60,7 +60,7 @@ function parseDailyWeather({ daily }) {
   });
 }
 
-function parseHoutlyWeather({ hourly, current }) {
+function parseHourlyWeather({ hourly, current }) {
   return hourly.time
     .map((time, index) => {
       return {

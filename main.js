@@ -2,17 +2,25 @@ import { ICON_MAP } from './iconMap';
 import './style.css';
 import { getWeather } from './weather';
 
-getWeather(10, 10, Intl.DateTimeFormat().resolvedOptions().timeZone)
-  .then(renderWeather)
-  .catch(e => {
-    console.error(e);
-    alert(`Can't display any data`);
-  });
+navigator.geolocation.getCurrentPosition(positionSucces, positionError);
+
+function positionSucces({ coords }) {
+  getWeather(coords.latitude, coords.longitude, Intl.DateTimeFormat().resolvedOptions().timeZone)
+    .then(renderWeather)
+    .catch(e => {
+      console.error(e);
+      alert(`Can't display any data`);
+    });
+}
+
+function positionError() {
+  alert('Not found your current position');
+}
 
 function renderWeather({ current, daily, hourly }) {
   renderCurrentWeather(current);
-  // renderDailyWeather(daily);
-  // renderHourlyWeather(hourly);
+  renderDailyWeather(daily);
+  renderHourlyWeather(hourly);
   document.body.classList.remove('blurred');
 }
 
@@ -36,7 +44,36 @@ function renderCurrentWeather(current) {
   setValue('current-precip', current.precip);
 }
 
-const dailySsection = document.querySelector('[data-day-section]');
+const DAY_FORMATTER = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+const dailySection = document.querySelector('[data-day-section]');
 const dayCardTemplate = document.querySelector('#day-card-template');
 
-function renderDailyWeather(daily) {}
+function renderDailyWeather(daily) {
+  dailySection.innerHTML = '';
+  daily.forEach(day => {
+    const element = dayCardTemplate.content.cloneNode(true);
+    setValue('temp', day.maxTemp, { parent: element });
+    setValue('date', DAY_FORMATTER.format(day.timestamp), { parent: element });
+    element.querySelector('[data-icon]').src = getIconUrl(day.iconCode);
+    dailySection.append(element);
+  });
+}
+
+const HOUR_FORMATTER = new Intl.DateTimeFormat(undefined, { hour: 'numeric' });
+const hourySection = document.querySelector('[data-hour-section]');
+const hourRowTemplate = document.querySelector('#hour-row-template');
+
+function renderHourlyWeather(hourly) {
+  hourySection.innerHTML = '';
+  hourly.forEach(hour => {
+    const element = hourRowTemplate.content.cloneNode(true);
+    setValue('temp', hour.temp, { parent: element });
+    setValue('fl-temp', hour.feelsLike, { parent: element });
+    setValue('wind', hour.wind, { parent: element });
+    setValue('precip', hour.precip, { parent: element });
+    setValue('time', HOUR_FORMATTER.format(hour.timestamp), { parent: element });
+    setValue('day', DAY_FORMATTER.format(hour.timestamp), { parent: element });
+    element.querySelector('[data-icon]').src = getIconUrl(hour.iconCode);
+    hourySection.append(element);
+  });
+}
